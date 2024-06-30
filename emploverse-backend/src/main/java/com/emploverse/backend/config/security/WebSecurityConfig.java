@@ -1,0 +1,89 @@
+package com.emploverse.backend.config.security;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import com.emploverse.backend.service.auth.CustomOAuth2UserService;
+import com.emploverse.backend.service.auth.CustomOidcUserService;
+
+@Configuration
+@EnableWebSecurity
+public class WebSecurityConfig {
+
+        private final JwtRequestFilter jwtRequestFilter;
+
+        @Autowired
+        public WebSecurityConfig(JwtRequestFilter jwtRequestFilter) {
+                this.jwtRequestFilter = jwtRequestFilter;
+        }
+
+        @Bean
+        public CustomOAuth2UserService customOAuth2UserService() {
+                return new CustomOAuth2UserService();
+        }
+
+        @Bean
+        public CustomOidcUserService customOidcUserService() {
+                return new CustomOidcUserService();
+        }
+
+        @Bean
+        public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService() {
+                return new DefaultOAuth2UserService();
+        }
+
+        @Bean
+        public BCryptPasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
+
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+                        throws Exception {
+                return authenticationConfiguration.getAuthenticationManager();
+        }
+
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                        ClientRegistrationRepository clientRegistrationRepository) throws Exception {
+                http
+                                .csrf(csrf -> csrf.disable())
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers("/api/auth/**").permitAll()
+                                                .anyRequest().authenticated())
+                                .oauth2Login(oauth2 -> oauth2
+                                                .clientRegistrationRepository(clientRegistrationRepository)
+                                                .defaultSuccessUrl("/loginSuccess", true)
+                                                .failureUrl("/loginFailure")
+                                                .userInfoEndpoint(userInfo -> userInfo
+                                                                .oidcUserService(customOidcUserService())
+                                                                .userService(customOAuth2UserService())))
+                                .logout(logout -> logout
+                                                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                                                .logoutSuccessUrl("/login")
+                                                .invalidateHttpSession(true)
+                                                .clearAuthentication(true)
+                                                .deleteCookies("JSESSIONID"))
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+
+                return http.build();
+        }
+
+}
