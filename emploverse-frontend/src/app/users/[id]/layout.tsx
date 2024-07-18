@@ -16,11 +16,7 @@ export default function UserDetailLayout({
             Back to Users
           </Link>
           <h1 className="text-2xl font-bold">User Details</h1>
-          <div>
-            <button className="text-sm bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-300">
-              Edit User
-            </button>
-          </div>
+          <span>User</span>
         </div>
       </div>
       <main>

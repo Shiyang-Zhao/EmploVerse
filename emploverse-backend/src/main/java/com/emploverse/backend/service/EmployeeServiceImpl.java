@@ -5,6 +5,10 @@ import com.emploverse.backend.model.Employee;
 import com.emploverse.backend.repository.EmployeeRepository;
 import com.emploverse.backend.util.EmployeeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +39,19 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional(readOnly = true)
     public Optional<EmployeeDTO> findEmployeeByUserId(Long userId) {
         return employeeRepository.findByUserId(userId)
+                .map(employeeMapper::employeeToEmployeeDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EmployeeDTO> findEmployeesBySortPage(int page, int size, String sortBy, String sortDir) {
+        int adjustedPage = page - 1 < 0 ? 0 : page - 1;
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(adjustedPage, size, sort);
+        System.err.println(employeeRepository.findAll(pageable)
+                .map(employeeMapper::employeeToEmployeeDTO));
+        return employeeRepository.findAll(pageable)
                 .map(employeeMapper::employeeToEmployeeDTO);
     }
 

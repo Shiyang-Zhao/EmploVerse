@@ -3,10 +3,10 @@ package com.emploverse.backend.controller;
 import com.emploverse.backend.dto.EmployeeDTO;
 import com.emploverse.backend.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -20,6 +20,16 @@ public class EmployeeController {
         this.employeeService = employeeService;
     }
 
+    @GetMapping
+    public ResponseEntity<Page<EmployeeDTO>> getEmployeesBySortPage(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        Page<EmployeeDTO> employees = employeeService.findEmployeesBySortPage(page, size, sortBy, sortDir);
+        return ResponseEntity.ok(employees);
+    }
+
     @GetMapping("/{id}/get")
     public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) {
         Optional<EmployeeDTO> employeeDTO = employeeService.findEmployeeById(id);
@@ -27,22 +37,12 @@ public class EmployeeController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping
-    public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
-        List<EmployeeDTO> employees = employeeService.findAllEmployees();
-        return ResponseEntity.ok(employees);
-    }
-
     @PostMapping("/{id}/update")
     public ResponseEntity<EmployeeDTO> updateEmployeeById(
             @PathVariable Long id,
             @RequestBody EmployeeDTO updatedEmployeeDTO) {
-        try {
-            EmployeeDTO updatedEmployee = employeeService.updateEmployeeById(id, updatedEmployeeDTO);
-            return ResponseEntity.ok(updatedEmployee);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        EmployeeDTO updatedEmployee = employeeService.updateEmployeeById(id, updatedEmployeeDTO);
+        return ResponseEntity.ok(updatedEmployee);
     }
 
     @PostMapping("/{id}/delete")

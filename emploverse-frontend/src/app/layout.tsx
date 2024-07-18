@@ -26,7 +26,7 @@ export default function RootLayout({
             <div className="w-60 shadow-lg bg-gradient-to-t from-white via-white">
               <Header />
             </div>
-            <div className="flex-1 overflow-auto">{children}</div>
+            <div className="flex-1">{children}</div>
           </div>
         </AuthProvider>
         <Scripts />

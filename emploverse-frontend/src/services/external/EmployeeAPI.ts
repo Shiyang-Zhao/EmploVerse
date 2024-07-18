@@ -10,6 +10,11 @@ const ExternalEmployeeAPI = {
         return response.data;
     },
 
+    getEmployeesBySortPage: async (page: number, size: number, sortBy: string, sortDir: string): Promise<PageDTO<EmployeeDTO>> => {
+        const response: AxiosResponse<PageDTO<EmployeeDTO>> = await Axios.get(`${EXTERNAL_API_BASE_URL}?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`);
+        return response.data;
+    },
+
     getAllEmployees: async (): Promise<EmployeeDTO[]> => {
         const response: AxiosResponse<EmployeeDTO[]> = await Axios.get(EXTERNAL_API_BASE_URL);
         return response.data;

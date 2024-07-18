@@ -4,6 +4,7 @@ import { EmployeeDTO } from "@/models/EmployeeDTO";
 import InternalEmployeeAPI from "@/services/internal/EmployeeAPI";
 import Calendar from "@/components/layout/Calendar";
 import Loading from "@/components/layout/Loading";
+import UpdateEmployeeForm from "@/components/employee/UpdateEmployeeForm";
 
 export default function EmployeeDetail({ params }: { params: { id: number } }) {
   const [employee, setEmployee] = useState<EmployeeDTO | null>(null);
@@ -15,6 +16,20 @@ export default function EmployeeDetail({ params }: { params: { id: number } }) {
     getEmployee();
   }, [id]);
 
+  const handleEmployeeUpdate = (updatedEmployee: EmployeeDTO) => {
+    setEmployee(updatedEmployee);
+  };
+
+  const handleEditClick = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    const modal = document.getElementById(
+      "update_employee_modal"
+    ) as HTMLDialogElement;
+    if (modal) {
+      modal.showModal();
+    }
+  };
+
   if (!employee) {
     return <Loading />;
   }
@@ -22,13 +37,23 @@ export default function EmployeeDetail({ params }: { params: { id: number } }) {
   return (
     <>
       <div className="bg-gray-800 shadow overflow-hidden text-gray-300">
-        <div className="px-4 py-5 border-b border-gray-600 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-200">
-            Employee ID: {id}
-          </h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Name: {employee.firstName} {employee.lastName}
-          </p>
+        <div className="flex justify-between px-4 py-5 border-b border-gray-600 sm:px-6">
+          <div>
+            <h3 className="text-lg leading-6 font-medium text-gray-200">
+              Employee ID: {id}
+            </h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              Name: {employee.firstName} {employee.lastName}
+            </p>
+          </div>
+          <div>
+            <button
+              className="text-sm bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-300"
+              onClick={(e) => handleEditClick(e, id)}
+            >
+              Edit Employee
+            </button>
+          </div>
         </div>
         <div className="border-t border-gray-600">
           <dl>
@@ -82,6 +107,7 @@ export default function EmployeeDetail({ params }: { params: { id: number } }) {
         </div>
       </div>
       <Calendar employeeId={id} />
+      <UpdateEmployeeForm id={id} onEmployeeUpdate={handleEmployeeUpdate} />
     </>
   );
 }

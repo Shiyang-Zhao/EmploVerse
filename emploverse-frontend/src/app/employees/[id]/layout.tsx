@@ -13,9 +13,10 @@ export default function EmployeeDetailLayout({
             href="/employees"
             className="text-gray-400 font-semibold hover:text-gray-200 transition-colors duration-300"
           >
-            Back to List
+            Back to Employees
           </Link>
           <h1 className="text-xl font-bold">Employee Details</h1>
+          <span>Employee</span>
         </div>
       </div>
       <main>
