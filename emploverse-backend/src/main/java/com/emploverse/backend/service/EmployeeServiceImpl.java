@@ -49,8 +49,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(adjustedPage, size, sort);
-        System.err.println(employeeRepository.findAll(pageable)
-                .map(employeeMapper::employeeToEmployeeDTO));
         return employeeRepository.findAll(pageable)
                 .map(employeeMapper::employeeToEmployeeDTO);
     }

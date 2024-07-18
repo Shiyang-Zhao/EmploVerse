@@ -7,6 +7,10 @@ import com.emploverse.backend.util.RoleMapper;
 import com.emploverse.backend.util.UserMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -66,6 +70,17 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public Optional<UserDTO> findUserByEmail(String email) {
         return userRepository.findByEmail(email)
+                .map(userMapper::userToUserDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UserDTO> findUsersBySortPage(int page, int size, String sortBy, String sortDir) {
+        int adjustedPage = page - 1 < 0 ? 0 : page - 1;
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(adjustedPage, size, sort);
+        return userRepository.findAll(pageable)
                 .map(userMapper::userToUserDTO);
     }
 

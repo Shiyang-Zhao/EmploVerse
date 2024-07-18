@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EmployeeDTO } from "@/models/EmployeeDTO";
 import InternalEmployeeAPI from "@/services/internal/EmployeeAPI";
 import { useRouter } from "next/navigation";
@@ -19,28 +19,56 @@ export default function Employees() {
     sortBy: "id",
     sortDir: "asc",
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [allDataFetched, setAllDataFetched] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
+  const observer = useRef<IntersectionObserver>();
+  const lastElementRef = useRef<HTMLTableRowElement>(null);
+
+  const fetchEmployees = async () => {
+    if (loading || allDataFetched) return;
+
+    setLoading(true);
+    try {
+      const data = await InternalEmployeeAPI.getEmployeesBySortPage(
+        pageData.page,
+        pageData.size,
+        pageData.sortBy,
+        pageData.sortDir
+      );
+
+      setEmployees((prev) => [...prev, ...data.content]);
+      setAllDataFetched(data.totalPages <= pageData.page);
+    } catch (error) {
+      console.error("Failed to fetch employees:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const getAllEmployees = async () => {
-      try {
-        const data = await InternalEmployeeAPI.getEmployeesBySortPage(
-          pageData.page,
-          pageData.size,
-          pageData.sortBy,
-          pageData.sortDir
-        );
-        setEmployees(data.content);
-      } catch (error) {
-        console.error("Failed to fetch employees:", error);
-      } finally {
-        setLoading(false);
-      }
+    fetchEmployees();
+  }, [pageData.page]);
+
+  useEffect(() => {
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !allDataFetched && !loading) {
+          setPageData((prev) => ({ ...prev, page: prev.page + 1 }));
+        }
+      },
+      { root: null, rootMargin: "0px", threshold: 0.1 }
+    );
+
+    if (lastElementRef.current)
+      observer.current.observe(lastElementRef.current);
+    return () => {
+      if (observer.current) observer.current.disconnect();
     };
-    getAllEmployees();
-  }, [pageData]);
+  }, [loading, allDataFetched]);
 
   const handleEmployeeUpdate = (updatedEmployee: EmployeeDTO) => {
     setEmployees((prevEmployees) =>
@@ -96,57 +124,6 @@ export default function Employees() {
         Go back to Home
       </Link>
       <h1 className="text-5xl font-extrabold my-4 text-gray-200">Employees</h1>
-      <div className="flex items-baseline justify-between filter-controls bg-gray-800 p-4 rounded-lg shadow space-y-4">
-        <label className="block">
-          <span className="text-gray-300">Page:</span>
-          <input
-            type="number"
-            className="form-input mt-1 block w-full rounded-md bg-gray-700 border-transparent focus:border-gray-500 focus:bg-gray-600 focus:ring-0"
-            value={pageData.page}
-            onChange={(e) =>
-              setPageData({ ...pageData, page: parseInt(e.target.value) || 1 })
-            }
-          />
-        </label>
-        <label className="block">
-          <span className="text-gray-300">Size:</span>
-          <input
-            type="number"
-            className="form-input mt-1 block w-full rounded-md bg-gray-700 border-transparent focus:border-gray-500 focus:bg-gray-600 focus:ring-0"
-            value={pageData.size}
-            onChange={(e) =>
-              setPageData({ ...pageData, size: parseInt(e.target.value) || 10 })
-            }
-          />
-        </label>
-        <label className="block">
-          <span className="text-gray-300">Sort By:</span>
-          <select
-            className="form-select mt-1 block w-full rounded-md bg-gray-700 border-transparent focus:border-gray-500 focus:bg-gray-600 focus:ring-0"
-            value={pageData.sortBy}
-            onChange={(e) =>
-              setPageData({ ...pageData, sortBy: e.target.value })
-            }
-          >
-            <option value="id">ID</option>
-            <option value="firstName">First Name</option>
-            <option value="lastName">Last Name</option>
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-gray-300">Sort Direction:</span>
-          <select
-            className="form-select mt-1 block w-full rounded-md bg-gray-700 border-transparent focus:border-gray-500 focus:bg-gray-600 focus:ring-0"
-            value={pageData.sortDir}
-            onChange={(e) =>
-              setPageData({ ...pageData, sortDir: e.target.value })
-            }
-          >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-          </select>
-        </label>
-      </div>
 
       <div className="w-full max-w-6xl p-4 bg-gray-800 shadow-xl rounded-lg">
         <table className="min-w-full bg-gray-800 text-gray-300">
@@ -170,52 +147,46 @@ export default function Employees() {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={5}>
-                  <Loading />
+            {employees.map((employee, index) => (
+              <tr
+                key={employee.id}
+                ref={index + 1 === employees.length ? lastElementRef : null}
+                className="hover:bg-gray-700 cursor-pointer"
+                onClick={() => handleRowClick(employee.id)}
+              >
+                <td className="py-3 px-4 border-b border-gray-600 text-center">
+                  {employee.id}
+                </td>
+                <td className="py-3 px-4 border-b border-gray-600 text-center">
+                  {employee.firstName} {employee.lastName}
+                </td>
+                <td className="py-3 px-4 border-b border-gray-600 text-center">
+                  {employee.firstName}
+                </td>
+                <td className="py-3 px-4 border-b border-gray-600 text-center">
+                  {employee.firstName}
+                </td>
+                <td className="py-3 px-4 border-b border-gray-600 text-center">
+                  <div className="space-x-2">
+                    <button
+                      className="px-3 py-1 bg-cyan-600 text-gray-200 rounded-lg hover:bg-cyan-500 transition-colors duration-300"
+                      onClick={(e) => handleEditClick(e, employee.id)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="px-3 py-1 bg-red-600 text-gray-200 rounded-lg hover:bg-red-500 transition-colors duration-300"
+                      onClick={(e) => handleDeleteClick(e, employee.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
-            ) : (
-              employees.map((employee) => (
-                <tr
-                  key={employee.id}
-                  className="hover:bg-gray-700 cursor-pointer"
-                  onClick={() => handleRowClick(employee.id)}
-                >
-                  <td className="py-3 px-4 border-b border-gray-600 text-center">
-                    {employee.id}
-                  </td>
-                  <td className="py-3 px-4 border-b border-gray-600 text-center">
-                    {employee.firstName} {employee.lastName}
-                  </td>
-                  <td className="py-3 px-4 border-b border-gray-600 text-center">
-                    {employee.firstName}
-                  </td>
-                  <td className="py-3 px-4 border-b border-gray-600 text-center">
-                    {employee.firstName}
-                  </td>
-                  <td className="py-3 px-4 border-b border-gray-600 text-center">
-                    <div className="space-x-2">
-                      <button
-                        className="px-3 py-1 bg-cyan-600 text-gray-200 rounded-lg hover:bg-cyan-500 transition-colors duration-300"
-                        onClick={(e) => handleEditClick(e, employee.id)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="px-3 py-1 bg-red-600 text-gray-200 rounded-lg hover:bg-red-500 transition-colors duration-300"
-                        onClick={(e) => handleDeleteClick(e, employee.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
+        {loading && !allDataFetched && <Loading />}
       </div>
       <UpdateEmployeeForm
         id={selectedEmployeeId}

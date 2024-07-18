@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-export default function Contact() {
+export default async function Contact() {
+  await new Promise(() => {});
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 text-gray-300 relative">
       <Link

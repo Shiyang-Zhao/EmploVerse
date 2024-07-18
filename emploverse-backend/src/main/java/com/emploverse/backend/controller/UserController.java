@@ -4,6 +4,7 @@ import com.emploverse.backend.dto.UserDTO;
 import com.emploverse.backend.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +23,16 @@ public class UserController {
     }
 
     @GetMapping
+    public ResponseEntity<Page<UserDTO>> getEmployeesBySortPage(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        Page<UserDTO> users = userService.findUsersBySortPage(page, size, sortBy, sortDir);
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/all/get")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
         List<UserDTO> users = userService.findAllUsers();
         return ResponseEntity.ok(users);

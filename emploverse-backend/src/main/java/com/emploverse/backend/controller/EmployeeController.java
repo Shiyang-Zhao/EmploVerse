@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -27,6 +28,12 @@ public class EmployeeController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
         Page<EmployeeDTO> employees = employeeService.findEmployeesBySortPage(page, size, sortBy, sortDir);
+        return ResponseEntity.ok(employees);
+    }
+
+    @GetMapping("/all/get")
+    public ResponseEntity<List<EmployeeDTO>> getAllUsers() {
+        List<EmployeeDTO> employees = employeeService.findAllEmployees();
         return ResponseEntity.ok(employees);
     }
 

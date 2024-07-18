@@ -2,8 +2,8 @@ import React from "react";
 
 const Loading: React.FC = () => {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 text-gray-300">
-      <div className="relative w-16 h-16">
+    <div className="flex items-center justify-center w-full h-full bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 text-gray-300">
+      <div className="flex items-center justify-center w-16 h-16">
         {[...Array(12)].map((_, i) => (
           <div
             key={i}
