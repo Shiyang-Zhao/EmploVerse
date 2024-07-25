@@ -15,10 +15,10 @@ const ExternalEmployeeAPI = {
         return response.data;
     },
 
-    getAllEmployees: async (): Promise<EmployeeDTO[]> => {
-        const response: AxiosResponse<EmployeeDTO[]> = await Axios.get(EXTERNAL_API_BASE_URL);
-        return response.data;
-    },
+    // getAllEmployees: async (): Promise<EmployeeDTO[]> => {
+    //     const response: AxiosResponse<EmployeeDTO[]> = await Axios.get(EXTERNAL_API_BASE_URL);
+    //     return response.data;
+    // },
 
     updateEmployeeById: async (id: number, updatedEmployeeDTO: Partial<EmployeeDTO>): Promise<EmployeeDTO> => {
         const response: AxiosResponse<EmployeeDTO> = await Axios.post(`${EXTERNAL_API_BASE_URL}/${id}/update`, updatedEmployeeDTO);

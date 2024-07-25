@@ -9,7 +9,9 @@ import { useAuth } from "@/context/AuthContext";
 import Loading from "@/components/layout/Loading";
 
 export default function Employees() {
-  const [employees, setEmployees] = useState<EmployeeDTO[]>([]);
+  const [employees, setEmployees] = useState<Map<number, EmployeeDTO>>(
+    new Map()
+  );
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
     null
   );
@@ -26,20 +28,24 @@ export default function Employees() {
   const observer = useRef<IntersectionObserver>();
   const lastElementRef = useRef<HTMLTableRowElement>(null);
 
-  const fetchEmployees = async () => {
+  const getEmployees = async () => {
     if (loading || allDataFetched) return;
-
     setLoading(true);
     try {
-      const data = await InternalEmployeeAPI.getEmployeesBySortPage(
-        pageData.page,
-        pageData.size,
-        pageData.sortBy,
-        pageData.sortDir
-      );
+      const { content, totalPages } =
+        await InternalEmployeeAPI.getEmployeesBySortPage(
+          pageData.page,
+          pageData.size,
+          pageData.sortBy,
+          pageData.sortDir
+        );
+      setEmployees((prev) => {
+        const newEmployees = new Map(prev);
+        content.forEach((employee) => newEmployees.set(employee.id, employee));
+        return newEmployees;
+      });
 
-      setEmployees((prev) => [...prev, ...data.content]);
-      setAllDataFetched(data.totalPages <= pageData.page);
+      setAllDataFetched(totalPages <= pageData.page);
     } catch (error) {
       console.error("Failed to fetch employees:", error);
     } finally {
@@ -48,7 +54,7 @@ export default function Employees() {
   };
 
   useEffect(() => {
-    fetchEmployees();
+    getEmployees();
   }, [pageData.page]);
 
   useEffect(() => {
@@ -71,10 +77,8 @@ export default function Employees() {
   }, [loading, allDataFetched]);
 
   const handleEmployeeUpdate = (updatedEmployee: EmployeeDTO) => {
-    setEmployees((prevEmployees) =>
-      prevEmployees.map((employee) =>
-        employee.id === updatedEmployee.id ? updatedEmployee : employee
-      )
+    setEmployees((prev) =>
+      new Map(prev).set(updatedEmployee.id, updatedEmployee)
     );
   };
 
@@ -88,9 +92,7 @@ export default function Employees() {
     const modal = document.getElementById(
       "update_employee_modal"
     ) as HTMLDialogElement;
-    if (modal) {
-      modal.showModal();
-    }
+    modal?.showModal();
   };
 
   const handleDeleteClick = async (e: React.MouseEvent, id: number) => {
@@ -99,17 +101,16 @@ export default function Employees() {
       alert("You cannot delete your own employee record.");
       return;
     }
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this employee?"
-    );
-    if (!confirmed) {
+    if (!window.confirm("Are you sure you want to delete this employee?"))
       return;
-    }
+
     try {
       await InternalEmployeeAPI.deleteEmployeeById(id);
-      setEmployees((prevEmployees) =>
-        prevEmployees.filter((employee) => employee.id !== id)
-      );
+      setEmployees((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(id);
+        return newMap;
+      });
     } catch (error) {
       alert(`Failed to delete the employee with ID: ${id}. ${error}`);
     }
@@ -126,19 +127,19 @@ export default function Employees() {
       <h1 className="text-5xl font-extrabold my-4 text-gray-200">Employees</h1>
 
       <div className="w-full max-w-6xl p-4 bg-gray-800 shadow-xl rounded-lg">
-        <table className="min-w-full bg-gray-800 text-gray-300">
+        <table className="table table-pin-rows min-w-full">
           <thead>
-            <tr className="bg-gray-700">
-              <th className="py-3 px-4 border-b-2 border-gray-600 text-center leading-tight">
+            <tr className="bg-gray-700 text-gray-300 text-base">
+              <th className="py-3 px-4 border-b-2 border-gray-600 text-start leading-tight">
                 ID
               </th>
-              <th className="py-3 px-4 border-b-2 border-gray-600 text-center leading-tight">
+              <th className="py-3 px-4 border-b-2 border-gray-600 text-start leading-tight">
                 Name
               </th>
-              <th className="py-3 px-4 border-b-2 border-gray-600 text-center leading-tight">
+              <th className="py-3 px-4 border-b-2 border-gray-600 text-start leading-tight">
                 Title
               </th>
-              <th className="py-3 px-4 border-b-2 border-gray-600 text-center leading-tight">
+              <th className="py-3 px-4 border-b-2 border-gray-600 text-start leading-tight">
                 Department
               </th>
               <th className="py-3 px-4 border-b-2 border-gray-600 text-center leading-tight">
@@ -147,23 +148,27 @@ export default function Employees() {
             </tr>
           </thead>
           <tbody>
-            {employees.map((employee, index) => (
+            {Array.from(employees.values()).map((employee, index) => (
               <tr
                 key={employee.id}
-                ref={index + 1 === employees.length ? lastElementRef : null}
+                ref={
+                  index + 1 === Array.from(employees.values()).length
+                    ? lastElementRef
+                    : null
+                }
                 className="hover:bg-gray-700 cursor-pointer"
                 onClick={() => handleRowClick(employee.id)}
               >
-                <td className="py-3 px-4 border-b border-gray-600 text-center">
+                <td className="py-3 px-4 border-b border-gray-600 text-start">
                   {employee.id}
                 </td>
-                <td className="py-3 px-4 border-b border-gray-600 text-center">
+                <td className="py-3 px-4 border-b border-gray-600 text-start">
                   {employee.firstName} {employee.lastName}
                 </td>
-                <td className="py-3 px-4 border-b border-gray-600 text-center">
+                <td className="py-3 px-4 border-b border-gray-600 text-start">
                   {employee.firstName}
                 </td>
-                <td className="py-3 px-4 border-b border-gray-600 text-center">
+                <td className="py-3 px-4 border-b border-gray-600 text-start">
                   {employee.firstName}
                 </td>
                 <td className="py-3 px-4 border-b border-gray-600 text-center">
@@ -186,7 +191,11 @@ export default function Employees() {
             ))}
           </tbody>
         </table>
-        {loading && !allDataFetched && <Loading />}
+        {loading && !allDataFetched && (
+          <div className="h-screen">
+            <Loading />
+          </div>
+        )}
       </div>
       <UpdateEmployeeForm
         id={selectedEmployeeId}

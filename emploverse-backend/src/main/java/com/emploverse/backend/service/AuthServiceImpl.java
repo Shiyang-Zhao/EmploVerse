@@ -1,8 +1,11 @@
 package com.emploverse.backend.service;
 
+import com.emploverse.backend.dto.CompletePasswordResetRequest;
 import com.emploverse.backend.dto.EmployeeDTO;
 import com.emploverse.backend.dto.LoginRequest;
 import com.emploverse.backend.dto.LoginResponse;
+import com.emploverse.backend.dto.PasswordResetRequest;
+import com.emploverse.backend.dto.PasswordResetResponse;
 import com.emploverse.backend.dto.UserDTO;
 import com.emploverse.backend.model.Employee;
 import com.emploverse.backend.model.Role;
@@ -40,13 +43,14 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserService userService;
+    private final EmailService emailService;
     private final JwtUtil jwtUtil;
 
     @Autowired
     public AuthServiceImpl(AuthenticationManager authenticationManager, UserRepository userRepository,
             EmployeeRepository employeeRepository, EmployeeMapper employeeMapper, RoleRepository roleRepository,
             BCryptPasswordEncoder passwordEncoder,
-            UserService userService, JwtUtil jwtUtil) {
+            UserService userService, EmailService emailService, JwtUtil jwtUtil) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.employeeRepository = employeeRepository;
@@ -54,6 +58,7 @@ public class AuthServiceImpl implements AuthService {
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
+        this.emailService = emailService;
         this.jwtUtil = jwtUtil;
     }
 
@@ -125,5 +130,37 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout() {
         // Add any additional logout logic if needed
+    }
+
+    @Override
+    public PasswordResetResponse requestPasswordReset(PasswordResetRequest passwordResetRequest) throws Exception {
+        final UserDetails userDetails = userService.loadUserByUsername(passwordResetRequest.getEmail());
+        // Generate a password reset token (using JWT here for simplicity)
+        String token = jwtUtil.generateToken(userDetails);
+
+        String resetLink = "http://127.0.0.1:8080/reset-password?token=" + token;
+        emailService.sendSimpleMessage(passwordResetRequest.getEmail(), "Password Reset Request",
+                "To reset your password, click the link below:\n" + resetLink);
+        // In a real application, you would send this token via email to the user
+        // For simplicity, we're returning it in the response
+        return new PasswordResetResponse(token);
+    }
+
+    @Override
+    public void completePasswordReset(CompletePasswordResetRequest completePasswordResetRequest) throws Exception {
+        String email = jwtUtil.extractUsername(completePasswordResetRequest.getToken());
+
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("Invalid token");
+        }
+        User user = userOptional.get();
+
+        if (!completePasswordResetRequest.getNewPassword().equals(completePasswordResetRequest.getConfirmPassword())) {
+            throw new IllegalArgumentException("Passwords do not match");
+        }
+
+        user.setPassword(passwordEncoder.encode(completePasswordResetRequest.getNewPassword()));
+        userRepository.save(user);
     }
 }

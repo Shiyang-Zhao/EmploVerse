@@ -59,7 +59,7 @@ export default function Profile() {
             </p>
             <p className="mt-2">
               <strong>Last Login:</strong>{" "}
-              {new Date(user.lastLogin).toLocaleString()}
+              {user.lastLogin && new Date(user.lastLogin).toLocaleString()}
             </p>
             <p className="mt-2">
               <strong>Roles:</strong> {user.roles.join(", ")}
@@ -69,6 +69,9 @@ export default function Profile() {
             </p>
           </div>
         </div>
+        <Link href={`/users/${user.id}/edit`} className="btn btn-info">
+          Edit
+        </Link>
       </div>
     </div>
   );

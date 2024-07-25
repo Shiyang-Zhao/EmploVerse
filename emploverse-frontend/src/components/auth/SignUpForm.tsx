@@ -29,7 +29,7 @@ const SignUpForm: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto p-4">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="text-black">
         {error && <div className="alert alert-error">{error}</div>}
         <div className="form-control mb-2">
           <input

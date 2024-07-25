@@ -1,8 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export default async function About() {
-  // await new Promise(() => {});
+export default function About() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 text-gray-300 relative">
       <Link

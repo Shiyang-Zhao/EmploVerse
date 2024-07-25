@@ -14,10 +14,10 @@ const InternalEmployeeAPI = {
         return response.data;
     },
 
-    getAllEmployees: async (): Promise<EmployeeDTO[]> => {
-        const response: AxiosResponse<EmployeeDTO[]> = await axios.get(INTERNAL_API_BASE_URL);
-        return response.data;
-    },
+    // getAllEmployees: async (): Promise<EmployeeDTO[]> => {
+    //     const response: AxiosResponse<EmployeeDTO[]> = await axios.get(INTERNAL_API_BASE_URL);
+    //     return response.data;
+    // },
 
     updateEmployeeById: async (id: number, updatedEmployeeDTO: Partial<EmployeeDTO>): Promise<EmployeeDTO> => {
         const response: AxiosResponse<EmployeeDTO> = await axios.post(`${INTERNAL_API_BASE_URL}/${id}/update`, updatedEmployeeDTO);

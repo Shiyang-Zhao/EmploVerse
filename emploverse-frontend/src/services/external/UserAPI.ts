@@ -10,10 +10,15 @@ const ExternalUserAPI = {
         return response.data;
     },
 
-    getAllUsers: async (): Promise<UserDTO[]> => {
-        const response: AxiosResponse<UserDTO[]> = await Axios.get(EXTERNAL_API_BASE_URL);
+    getUsersBySortPage: async (page: number, size: number, sortBy: string, sortDir: string): Promise<PageDTO<UserDTO>> => {
+        const response: AxiosResponse<PageDTO<UserDTO>> = await Axios.get(`${EXTERNAL_API_BASE_URL}?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`);
         return response.data;
     },
+
+    // getAllUsers: async (): Promise<UserDTO[]> => {
+    //     const response: AxiosResponse<UserDTO[]> = await Axios.get(EXTERNAL_API_BASE_URL);
+    //     return response.data;
+    // },
 
     updateUserById: async (id: number, updatedUserDTO: Partial<UserDTO>): Promise<UserDTO> => {
         const response: AxiosResponse<UserDTO> = await Axios.post(`${EXTERNAL_API_BASE_URL}/${id}/update`, updatedUserDTO);

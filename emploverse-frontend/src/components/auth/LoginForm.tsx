@@ -3,11 +3,13 @@ import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { LoginDTO } from "@/models/AuthDTO";
 import handleChange from "@/util/handleChange";
+import Link from "next/link";
 
 const LoginForm: React.FC = () => {
   const [formData, setFormData] = useState<LoginDTO>({
     email: "",
     password: "",
+    rememberMe: false,
   });
   const [error, setError] = useState("");
   const { login } = useAuth();
@@ -24,7 +26,7 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto p-4">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="text-black">
         {error && <div className="alert alert-error">{error}</div>}
         <div className="form-control mb-2">
           <input
@@ -47,6 +49,29 @@ const LoginForm: React.FC = () => {
             onChange={(e) => handleChange(e, setFormData)}
             required
           />
+        </div>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              name="rememberMe"
+              className="mr-2"
+              checked={formData.rememberMe}
+              onChange={(e) => handleChange(e, setFormData)}
+            />
+            <label htmlFor="rememberMe">
+              Remember me
+            </label>
+          </div>
+          <div>
+            <Link
+              href="/password-reset"
+              className="text-blue-600 hover:underline"
+            >
+              Forgot Password?
+            </Link>
+          </div>
         </div>
         <div className="form-control mt-6">
           <button type="submit" className="btn btn-primary">

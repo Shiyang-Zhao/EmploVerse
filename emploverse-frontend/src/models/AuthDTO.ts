@@ -9,6 +9,7 @@ interface SignUpDTO {
 interface LoginDTO {
     email: string;
     password: string;
+    rememberMe: boolean;
 }
 
 export type { SignUpDTO, LoginDTO }

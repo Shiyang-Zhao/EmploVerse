@@ -18,12 +18,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="text-sm">
       <Heads />
       <body className={inter.className}>
         <AuthProvider>
           <div className="flex h-screen">
-            <div className="w-60 shadow-lg bg-gradient-to-t from-white via-white">
+            <div className="w-2/12">
               <Header />
             </div>
             <div className="flex-1">{children}</div>

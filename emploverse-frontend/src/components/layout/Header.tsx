@@ -9,14 +9,14 @@ export default function Header() {
   const { user } = useAuth();
 
   return (
-    <div className="flex flex-col items-center p-6 bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 text-gray-300 fixed left-0 top-0 h-full shadow-xl">
-      <div className="mb-6">
+    <div className="w-2/12 flex flex-col items-center fixed left-0 top-0 h-full shadow-xl bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 text-gray-300">
+      <div className="my-6">
         <Image
           src="/title.svg"
           alt="title"
           height={0}
           width={0}
-          style={{ width: "200px", height: "auto" }}
+          style={{ width: "auto", height: "auto" }}
           priority
         />
       </div>

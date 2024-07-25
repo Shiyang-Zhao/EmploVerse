@@ -31,12 +31,16 @@ export default function EmployeeDetail({ params }: { params: { id: number } }) {
   };
 
   if (!employee) {
-    return <Loading />;
+    return (
+      <div className="h-screen">
+        <Loading />
+      </div>
+    );
   }
 
   return (
     <>
-      <div className="bg-gray-800 shadow overflow-hidden text-gray-300">
+      <div className="bg-gray-800 shadow text-gray-300">
         <div className="flex justify-between px-4 py-5 border-b border-gray-600 sm:px-6">
           <div>
             <h3 className="text-lg leading-6 font-medium text-gray-200">

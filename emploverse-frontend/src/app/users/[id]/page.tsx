@@ -3,20 +3,40 @@ import { useEffect, useState } from "react";
 import { UserDTO } from "@/models/UserDTO";
 import InternalUserAPI from "@/services/internal/UserAPI";
 import Loading from "@/components/layout/Loading";
+import InternalEmployeeAPI from "@/services/internal/EmployeeAPI";
+import { EmployeeDTO } from "@/models/EmployeeDTO";
 
 export default function UserDetail({ params }: { params: { id: number } }) {
-  const [user, setUser] = useState<UserDTO | null>(null);
+  const [user, setUser] = useState<Partial<UserDTO>>({});
+  const [employee, setEmployee] = useState<Partial<EmployeeDTO>>({});
   const id = params.id;
 
+  const getUserAndEmployee = async () => {
+    try {
+      const userData = await InternalUserAPI.getUserById(id);
+      setUser(userData);
+
+      if (userData.employeeId) {
+        const employeeData = await InternalEmployeeAPI.getEmployeeById(
+          userData.employeeId
+        );
+        setEmployee(employeeData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+    }
+  };
+
   useEffect(() => {
-    const getUser = async () => {
-      setUser(id ? await InternalUserAPI.getUserById(id) : null);
-    };
-    getUser();
+    getUserAndEmployee();
   }, [id]);
 
-  if (!user) {
-    return <Loading />;
+  if (Object.keys(user).length === 0 || Object.keys(employee).length === 0) {
+    return (
+      <div className="h-screen">
+        <Loading />
+      </div>
+    );
   }
 
   return (
@@ -48,7 +68,7 @@ export default function UserDetail({ params }: { params: { id: number } }) {
             Last Login:
           </span>
           <span className="block text-lg text-gray-300">
-            {new Date(user.lastLogin).toLocaleString()}
+            {user.lastLogin && new Date(user.lastLogin).toLocaleString()}
           </span>
         </div>
         <div className="mb-4">
@@ -62,7 +82,7 @@ export default function UserDetail({ params }: { params: { id: number } }) {
             Roles:
           </span>
           <span className="block text-lg text-gray-300">
-            {user.roles.join(", ")}
+            {user.roles?.join(", ")}
           </span>
         </div>
       </div>

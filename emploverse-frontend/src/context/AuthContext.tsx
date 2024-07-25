@@ -24,6 +24,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const REMEMBER_ME_EXPIRY = parseInt(process.env.REMEMBER_ME_EXPIRY || "7", 10);
+const DEFAULT_REMEMBER_ME_EXPIRY = parseInt(
+  process.env.DEFAULT_REMEMBER_ME_EXPIRY || "1",
+  10
+);
+
 const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserDTO | null>(null);
   const [employee, setEmployee] = useState<EmployeeDTO | null>(null);
@@ -45,19 +51,27 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const login = async (loginData: LoginDTO) => {
     try {
       const data = await InternalAuthAPI.login(loginData);
+      router.push(pathname);
       const { jwt, ...userData } = data;
+
       if (!jwt || !userData) {
         throw new Error("Invalid response from server");
       }
       setUser(userData);
-      cookies.set("user", JSON.stringify(userData), { expires: 7 });
-      cookies.set("jwt", jwt, { expires: 7 });
-      router.push(pathname);
-      const employeeData = await InternalEmployeeAPI.getEmployeeById(
-        userData.employeeId
-      );
-      setEmployee(employeeData);
-      cookies.set("employee", JSON.stringify(employeeData), { expires: 7 });
+      const cookieExpiry = loginData.rememberMe
+        ? REMEMBER_ME_EXPIRY
+        : DEFAULT_REMEMBER_ME_EXPIRY;
+      const cookieOptions = { expires: cookieExpiry };
+      cookies.set("user", JSON.stringify(userData), cookieOptions);
+      cookies.set("jwt", jwt, cookieOptions);
+
+      if (userData.employeeId) {
+        const employeeData = await InternalEmployeeAPI.getEmployeeById(
+          userData.employeeId
+        );
+        setEmployee(employeeData);
+        cookies.set("employee", JSON.stringify(employeeData), cookieOptions);
+      }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Login failed";
       console.log("Login failed:", errorMessage, err);
@@ -74,20 +88,19 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setEmployee(null);
-    cookies.remove("user");
-    cookies.remove("employee");
-    cookies.remove("jwt");
-    InternalAuthAPI.logout()
-      .then(() => {
-        router.push("/?modal=login");
-      })
-      .catch((err) => {
-        const errorMessage = err.response?.data?.message || "Logout failed";
-        console.log("Logout failed:", errorMessage, err);
-      });
+  const logout = async () => {
+    try {
+      setUser(null);
+      setEmployee(null);
+      cookies.remove("user");
+      cookies.remove("employee");
+      cookies.remove("jwt");
+      await InternalAuthAPI.logout();
+      router.push("/?modal=login");
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Logout failed";
+      console.log("Logout failed:", errorMessage, err);
+    }
   };
 
   return (
