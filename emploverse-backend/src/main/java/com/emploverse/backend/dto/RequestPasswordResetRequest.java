@@ -11,6 +11,6 @@ import lombok.Builder;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PasswordResetResponse {
-    private String token;
+public class RequestPasswordResetRequest {
+    private String email;
 }

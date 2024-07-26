@@ -9,7 +9,6 @@ const LoginForm: React.FC = () => {
   const [formData, setFormData] = useState<LoginDTO>({
     email: "",
     password: "",
-    rememberMe: false,
   });
   const [error, setError] = useState("");
   const { login } = useAuth();
@@ -57,8 +56,8 @@ const LoginForm: React.FC = () => {
               id="rememberMe"
               name="rememberMe"
               className="mr-2"
-              checked={formData.rememberMe}
-              onChange={(e) => handleChange(e, setFormData)}
+              // checked={formData.rememberMe}
+              // onChange={(e) => handleChange(e, setFormData)}
             />
             <label htmlFor="rememberMe">
               Remember me

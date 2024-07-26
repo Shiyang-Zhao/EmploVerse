@@ -4,8 +4,7 @@ import com.emploverse.backend.dto.CompletePasswordResetRequest;
 import com.emploverse.backend.dto.EmployeeDTO;
 import com.emploverse.backend.dto.LoginRequest;
 import com.emploverse.backend.dto.LoginResponse;
-import com.emploverse.backend.dto.PasswordResetRequest;
-import com.emploverse.backend.dto.PasswordResetResponse;
+import com.emploverse.backend.dto.RequestPasswordResetRequest;
 import com.emploverse.backend.dto.UserDTO;
 import com.emploverse.backend.model.Employee;
 import com.emploverse.backend.model.Role;
@@ -25,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -35,6 +35,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthServiceImpl implements AuthService {
+
+    @Value("${client.baseUrl}")
+    private String baseUrl;
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
@@ -133,17 +136,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public PasswordResetResponse requestPasswordReset(PasswordResetRequest passwordResetRequest) throws Exception {
-        final UserDetails userDetails = userService.loadUserByUsername(passwordResetRequest.getEmail());
+    public void requestPasswordReset(RequestPasswordResetRequest requestPasswordResetRequest) throws Exception {
+        final UserDetails userDetails = userService.loadUserByUsername(requestPasswordResetRequest.getEmail());
         // Generate a password reset token (using JWT here for simplicity)
         String token = jwtUtil.generateToken(userDetails);
 
-        String resetLink = "http://127.0.0.1:8080/reset-password?token=" + token;
-        emailService.sendSimpleMessage(passwordResetRequest.getEmail(), "Password Reset Request",
+        String resetLink = baseUrl + "/password-reset?token=" + token;
+        emailService.sendSimpleMessage(requestPasswordResetRequest.getEmail(), "Password Reset Request",
                 "To reset your password, click the link below:\n" + resetLink);
-        // In a real application, you would send this token via email to the user
-        // For simplicity, we're returning it in the response
-        return new PasswordResetResponse(token);
     }
 
     @Override

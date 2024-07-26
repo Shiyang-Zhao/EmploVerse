@@ -9,7 +9,17 @@ interface SignUpDTO {
 interface LoginDTO {
     email: string;
     password: string;
-    rememberMe: boolean;
+    // rememberMe: boolean;
 }
 
-export type { SignUpDTO, LoginDTO }
+interface RequestPasswordResetRequest {
+    email: string;
+}
+
+interface CompletePasswordResetRequest {
+    token: string;
+    newPassword: string;
+    confirmPassword: string;
+}
+
+export type { SignUpDTO, LoginDTO, CompletePasswordResetRequest, RequestPasswordResetRequest }

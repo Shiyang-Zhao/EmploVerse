@@ -3,8 +3,7 @@ package com.emploverse.backend.service;
 import com.emploverse.backend.dto.CompletePasswordResetRequest;
 import com.emploverse.backend.dto.LoginRequest;
 import com.emploverse.backend.dto.LoginResponse;
-import com.emploverse.backend.dto.PasswordResetRequest;
-import com.emploverse.backend.dto.PasswordResetResponse;
+import com.emploverse.backend.dto.RequestPasswordResetRequest;
 import com.emploverse.backend.dto.SignupRequest;
 import com.emploverse.backend.dto.SignupResponse;
 
@@ -15,7 +14,7 @@ public interface AuthService {
 
     void logout();
 
-    PasswordResetResponse requestPasswordReset(PasswordResetRequest passwordResetRequest) throws Exception;
+    void requestPasswordReset(RequestPasswordResetRequest requestPasswordResetRequest) throws Exception;
 
     void completePasswordReset(CompletePasswordResetRequest completePasswordResetRequest) throws Exception;
 }

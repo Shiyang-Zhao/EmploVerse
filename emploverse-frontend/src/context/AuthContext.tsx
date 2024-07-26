@@ -58,9 +58,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         throw new Error("Invalid response from server");
       }
       setUser(userData);
-      const cookieExpiry = loginData.rememberMe
-        ? REMEMBER_ME_EXPIRY
-        : DEFAULT_REMEMBER_ME_EXPIRY;
+      const cookieExpiry = DEFAULT_REMEMBER_ME_EXPIRY;
       const cookieOptions = { expires: cookieExpiry };
       cookies.set("user", JSON.stringify(userData), cookieOptions);
       cookies.set("jwt", jwt, cookieOptions);
