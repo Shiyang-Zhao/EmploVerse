@@ -7,10 +7,12 @@ import com.emploverse.backend.dto.LoginResponse;
 import com.emploverse.backend.dto.RequestPasswordResetRequest;
 import com.emploverse.backend.dto.UserDTO;
 import com.emploverse.backend.model.Employee;
+import com.emploverse.backend.model.PasswordResetToken;
 import com.emploverse.backend.model.Role;
 import com.emploverse.backend.model.RoleName;
 import com.emploverse.backend.model.User;
 import com.emploverse.backend.repository.EmployeeRepository;
+import com.emploverse.backend.repository.PasswordResetTokenRepository;
 import com.emploverse.backend.repository.RoleRepository;
 import com.emploverse.backend.repository.UserRepository;
 import com.emploverse.backend.dto.SignupRequest;
@@ -21,6 +23,7 @@ import com.emploverse.backend.util.JwtUtil;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +39,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    @Value("${client.baseUrl}")
+    @Value("${client.base-url}")
     private String baseUrl;
+
+    @Value("${password.reset-token-expiration-time}")
+    private Long passwordResetTokenExpirationTime;
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmployeeMapper employeeMapper;
     private final RoleRepository roleRepository;
     private final BCryptPasswordEncoder passwordEncoder;
@@ -51,12 +58,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     public AuthServiceImpl(AuthenticationManager authenticationManager, UserRepository userRepository,
-            EmployeeRepository employeeRepository, EmployeeMapper employeeMapper, RoleRepository roleRepository,
+            EmployeeRepository employeeRepository, PasswordResetTokenRepository passwordResetTokenRepository,
+            EmployeeMapper employeeMapper, RoleRepository roleRepository,
             BCryptPasswordEncoder passwordEncoder,
             UserService userService, EmailService emailService, JwtUtil jwtUtil) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.employeeRepository = employeeRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.employeeMapper = employeeMapper;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -117,8 +126,11 @@ public class AuthServiceImpl implements AuthService {
         }
 
         final UserDetails userDetails = userService.loadUserByUsername(loginRequest.getEmail());
-        final String jwt = jwtUtil.generateToken(userDetails);
-
+        long expirationTime = loginRequest.isRememberMe() ? jwtUtil.getRememberMeExpirationTime()
+                : jwtUtil.getDefaultExpirationTime();
+        final String jwt = jwtUtil.generateToken(userDetails, expirationTime);
+        System.out.println("login request: " + loginRequest.isRememberMe());
+        System.out.println("jwt expiration time: " + expirationTime);
         UserDTO userDTO = userService.findUserByEmail(loginRequest.getEmail())
                 .orElseThrow(
                         () -> new UsernameNotFoundException("User not found with email: " + loginRequest.getEmail()));
@@ -137,24 +149,45 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void requestPasswordReset(RequestPasswordResetRequest requestPasswordResetRequest) throws Exception {
-        final UserDetails userDetails = userService.loadUserByUsername(requestPasswordResetRequest.getEmail());
-        // Generate a password reset token (using JWT here for simplicity)
-        String token = jwtUtil.generateToken(userDetails);
+        Optional<User> userOptional = userRepository.findByEmail(requestPasswordResetRequest.getEmail());
+        if (userOptional.isEmpty()) {
+            throw new Exception("User with email " + requestPasswordResetRequest.getEmail() + " not found.");
+        }
+        User user = userOptional.get();
+        String token = UUID.randomUUID().toString();
+        PasswordResetToken passwordResetToken = PasswordResetToken.builder()
+                .token(token)
+                .user(user)
+                .expiryDate(new Date(System.currentTimeMillis() + passwordResetTokenExpirationTime)) // 1 hour
+                                                                                                     // expiration
+                .build();
+        passwordResetTokenRepository.save(passwordResetToken);
 
-        String resetLink = baseUrl + "/password-reset?token=" + token;
-        emailService.sendSimpleMessage(requestPasswordResetRequest.getEmail(), "Password Reset Request",
-                "To reset your password, click the link below:\n" + resetLink);
+        String resetUrl = baseUrl + "/password-reset?token=" + token;
+        String emailContent = String.format(
+                "Dear %s,%n%n" +
+                        "We have received a request to reset the password for your account associated with this email address. "
+                        +
+                        "If you did not request this change, please ignore this email. Otherwise, please click the link below to reset your password:%n%n"
+                        +
+                        "%s%n%n" +
+                        "This link will expire in 10 minutes.%n%n" +
+                        "Best regards,%n" +
+                        "EmploVerse Team",
+                user.getUsername(), resetUrl);
+
+        emailService.sendSimpleMessage(requestPasswordResetRequest.getEmail(), "Password Reset Request", emailContent);
     }
 
     @Override
     public void completePasswordReset(CompletePasswordResetRequest completePasswordResetRequest) throws Exception {
-        String email = jwtUtil.extractUsername(completePasswordResetRequest.getToken());
-
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid token");
+        Optional<PasswordResetToken> resetTokenOptional = passwordResetTokenRepository
+                .findByToken(completePasswordResetRequest.getToken());
+        if (resetTokenOptional.isEmpty() || resetTokenOptional.get().getExpiryDate().before(new Date())) {
+            throw new IllegalArgumentException("Invalid or expired token");
         }
-        User user = userOptional.get();
+
+        User user = resetTokenOptional.get().getUser();
 
         if (!completePasswordResetRequest.getNewPassword().equals(completePasswordResetRequest.getConfirmPassword())) {
             throw new IllegalArgumentException("Passwords do not match");
@@ -162,5 +195,6 @@ public class AuthServiceImpl implements AuthService {
 
         user.setPassword(passwordEncoder.encode(completePasswordResetRequest.getNewPassword()));
         userRepository.save(user);
+        passwordResetTokenRepository.delete(resetTokenOptional.get());
     }
 }

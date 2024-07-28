@@ -16,14 +16,25 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.expirationTime}")
-    private long expirationTime;
+    @Value("${jwt.default-expiration-time}")
+    private long defaultExpirationTime;
 
-    public String generateToken(UserDetails userDetails) {
+    @Value("${jwt.remember-me-expiration-time}")
+    private long rememberMeExpirationTime;
+
+    public long getDefaultExpirationTime() {
+        return defaultExpirationTime;
+    }
+
+    public long getRememberMeExpirationTime() {
+        return rememberMeExpirationTime;
+    }
+
+    public String generateToken(UserDetails userDetails, long expirationTime) {
         return Jwts.builder()
                 .setSubject(userDetails.getUsername()) // Ensure username here returns email
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationTime)) // 7 days
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
     }

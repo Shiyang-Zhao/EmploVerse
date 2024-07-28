@@ -26,6 +26,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) throws Exception {
         LoginResponse loginResponse = authService.login(loginRequest);
+        System.out.println("login request: " + loginRequest.isRememberMe());
         return ResponseEntity.ok(loginResponse);
     }
 

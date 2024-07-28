@@ -9,7 +9,7 @@ interface SignUpDTO {
 interface LoginDTO {
     email: string;
     password: string;
-    // rememberMe: boolean;
+    rememberMe: boolean;
 }
 
 interface RequestPasswordResetRequest {

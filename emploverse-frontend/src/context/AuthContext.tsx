@@ -24,9 +24,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const REMEMBER_ME_EXPIRY = parseInt(process.env.REMEMBER_ME_EXPIRY || "7", 10);
-const DEFAULT_REMEMBER_ME_EXPIRY = parseInt(
-  process.env.DEFAULT_REMEMBER_ME_EXPIRY || "1",
+const REMEMBER_ME_COOKIE_EXPIRY_DAYS = parseInt(
+  process.env.REMEMBER_ME_COOKIE_EXPIRY_DAYS || "7",
+  10
+);
+const DEFAULT_COOKIE_EXPIRY_DAYS = parseInt(
+  process.env.DEFAULT_COOKIE_EXPIRY_DAYS || "1",
   10
 );
 
@@ -58,8 +61,11 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         throw new Error("Invalid response from server");
       }
       setUser(userData);
-      const cookieExpiry = DEFAULT_REMEMBER_ME_EXPIRY;
+      const cookieExpiry = loginData.rememberMe
+        ? REMEMBER_ME_COOKIE_EXPIRY_DAYS
+        : DEFAULT_COOKIE_EXPIRY_DAYS;
       const cookieOptions = { expires: cookieExpiry };
+
       cookies.set("user", JSON.stringify(userData), cookieOptions);
       cookies.set("jwt", jwt, cookieOptions);
 

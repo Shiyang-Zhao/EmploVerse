@@ -20,7 +20,7 @@ import com.emploverse.backend.repository.UserRepository;
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    @Value("${UNUSABLE_PASSWORD}")
+    @Value("${password.unusable-password}")
     private String unusablePassword;
 
     @Autowired

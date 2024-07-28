@@ -21,7 +21,7 @@ import com.emploverse.backend.repository.UserRepository;
 @Service
 public class CustomOidcUserService extends OidcUserService {
 
-    @Value("${UNUSABLE_PASSWORD}")
+    @Value("${password.unusable-password}")
     private String unusablePassword;
 
     @Autowired
