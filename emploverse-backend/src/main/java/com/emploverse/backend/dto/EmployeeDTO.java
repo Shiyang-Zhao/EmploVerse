@@ -14,7 +14,7 @@ public class EmployeeDTO {
     private String firstName;
     private String lastName;
     private String profileImagePath;
-
+    private Long departmentId;
     @Setter(lombok.AccessLevel.NONE)
     private Long userId;
 }

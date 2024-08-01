@@ -12,8 +12,10 @@ public interface EmployeeMapper {
     EmployeeMapper INSTANCE = Mappers.getMapper(EmployeeMapper.class);
 
     @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "department.id", target = "departmentId")
     EmployeeDTO employeeToEmployeeDTO(Employee employee);
 
     @Mapping(source = "userId", target = "user.id")
+    @Mapping(source = "departmentId", target = "department.id")
     Employee employeeDTOToEmployee(EmployeeDTO employeeDTO);
 }
